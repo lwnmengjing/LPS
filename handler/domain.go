@@ -15,7 +15,7 @@ const (
 	IdName = "go.micro.srv.LPS.domain"
 )
 
-type Domain struct {}
+type Domain struct{}
 
 func (d *Domain) Create(ctx context.Context, req *proto.CreateModel, rsp *proto.Empty) error {
 	id := IdName + ".create"
@@ -63,7 +63,7 @@ func (d *Domain) Update(ctx context.Context, req *proto.Model, rsp *proto.Empty)
 		model.Name = req.Name
 	}
 	if len(req.Metadata) > 0 {
-		model.Metadata, _  = json.Marshal(req.Metadata)
+		model.Metadata, _ = json.Marshal(req.Metadata)
 	}
 	if len(req.Service) > 0 {
 		model.Service = req.Service
@@ -89,45 +89,50 @@ func (d *Domain) View(ctx context.Context, req *proto.ModelId, rsp *proto.Model)
 	rsp.Id = req.Id
 	rsp.Name = object.Name
 	if err = json.Unmarshal(object.Metadata, &rsp.Metadata); err != nil {
-		return errors.New(id, "metadata " + err.Error(), http.StatusInternalServerError)
+		return errors.New(id, "metadata "+err.Error(), http.StatusInternalServerError)
 	}
 	rsp.ExpiredAt = object.ExpiredAt.String()
 	return nil
 }
-
 
 func (d *Domain) List(ctx context.Context, req *proto.Condition, rsp *proto.Models) error {
 	id := IdName + ".list"
 	if req.PageSize == 0 {
 		req.PageSize = 10
 	}
-	domain := &models.Domain{}
-	list, totalItem, err := domain.List(models.DB, models.Condition{
-		Limit: int(req.PageSize),
+
+	base := &service.Base{
+		Model: &models.Domain{},
+	}
+	var list []models.Domain
+	err := base.List(&list, models.Condition{
+		Limit:  int(req.PageSize),
 		Offset: int(req.Offset),
-	}, nil)
+	})
 	if err != nil {
 		return errors.New(id, err.Error(), http.StatusInternalServerError)
 	}
+	totalItem := int64(len(list))
 	for _, o := range list {
 		model := &proto.Model{
-			Id: o.ID,
-			Name: o.Name,
-			Service: o.Service,
+			Id:        o.ID,
+			Name:      o.Name,
+			Service:   o.Service,
 			ExpiredAt: o.ExpiredAt.String(),
 		}
 		_ = json.Unmarshal(o.Metadata, &model.Metadata)
 		rsp.Data = append(rsp.Data, model)
+
 	}
 	pages := int64(totalItem / req.PageSize)
-	if totalItem % req.PageSize > 0 {
+	if totalItem%req.PageSize > 0 {
 		pages++
 	}
 	rsp.Page = &proto.Page{
-		PageSize: req.PageSize,
+		PageSize:  req.PageSize,
 		TotalItem: totalItem,
-		Page: req.Offset,
-		Pages: pages,
+		Page:      req.Offset,
+		Pages:     pages,
 	}
 	return nil
 }

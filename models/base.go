@@ -1,6 +1,7 @@
 package models
 
 import (
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	"github.com/micro/go-log"
@@ -15,13 +16,14 @@ type (
 )
 
 const (
-	EventBefore		Event	= "before"
-	EventAfter				= "after"
+	EventBefore Event = "before"
+	EventAfter        = "after"
 )
 
-func DBInit()  {
+func DBInit() {
 	var err error
 	DB, err = gorm.Open("postgres", "postgresql://root@linwenxiangdeMacBook-Air.local:26257/m_sso?sslmode=disable")
+	//DB, err = gorm.Open("mysql", "mysql://test:$j1mepaag^@101.132.122.150:3306/m_lps")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -29,8 +31,8 @@ func DBInit()  {
 }
 
 type Base struct {
-	action 				Action
-	eventBefore, eventAfter		func(baser Baser) (Baser, error)
+	action                  Action
+	eventBefore, eventAfter func(baser Baser) (Baser, error)
 }
 
 func (b *Base) SetEventFunc(event Event, f func(baser Baser) (Baser, error)) {
@@ -69,7 +71,7 @@ func Create(base Baser, db *gorm.DB) (Baser, error) {
 	return eventFunc(b, base.GetEventFunc(EventAfter), err)
 }
 
-func Update(base Baser, db *gorm.DB, cols... string) (Baser, error) {
+func Update(base Baser, db *gorm.DB, cols ...string) (Baser, error) {
 	base.SetAction(ActionUpdate)
 	base, _ = eventFunc(base, base.GetEventFunc(EventBefore), nil)
 
@@ -98,23 +100,18 @@ func View(base Baser, db *gorm.DB, condition Condition) (Baser, error) {
 	return eventFunc(base, base.GetEventFunc(EventAfter), err)
 }
 
-func List(base Baser, db *gorm.DB, list *[]Baser, condition Condition) error {
+func List(base Baser, db *gorm.DB, list interface{}, condition Condition) error {
 	base.SetAction(ActionList)
-	query := db.Model(base)
+	query := db.Table(base.TableName())
 	if condition.Limit == 0 {
 		condition.Limit = LimitDefault
 	}
-	err := findCondition(query, condition).Find(list).Error
-	if f := base.GetEventFunc(EventAfter); f != nil && err == nil {
-		for _, object := range *list {
-			 object, _ = eventFunc(object, f, nil)
-		}
-	}
-	return err
+	findCondition(query, condition).Find(list)
+	return nil
 
 }
 
-func Delete(base Baser, db *gorm.DB, condition map[string][]interface{}, force bool) (Baser, error)  {
+func Delete(base Baser, db *gorm.DB, condition map[string][]interface{}, force bool) (Baser, error) {
 	base.SetAction(ActionDelete)
 	base, _ = eventFunc(base, base.GetEventFunc(EventBefore), nil)
 	var err error

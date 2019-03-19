@@ -6,9 +6,8 @@ import (
 )
 
 type Base struct {
-	Model 		models.Baser
-	Models 		*[]models.Baser
-	EventBefore, EventAfter		func(base models.Baser) (models.Baser, error)
+	Model                   models.Baser
+	EventBefore, EventAfter func(base models.Baser) (models.Baser, error)
 }
 
 func (b *Base) eventFunc() {
@@ -19,15 +18,15 @@ func (b *Base) Create() (err error) {
 	if b.Model == nil {
 		return errors.New("db model is must not empty")
 	}
-	b.Model, err =  models.Create(b.Model, models.DB)
+	b.Model, err = models.Create(b.Model, models.DB)
 	return err
 }
 
-func (b *Base) Update(cols... string) (err error) {
+func (b *Base) Update(cols ...string) (err error) {
 	if b.Model == nil {
 		return errors.New("db model is must not empty")
 	}
-	b.Model, err =  models.Update(b.Model, models.DB, cols...)
+	b.Model, err = models.Update(b.Model, models.DB, cols...)
 	return err
 }
 
@@ -39,11 +38,11 @@ func (b *Base) View(condition models.Condition) (err error) {
 	return err
 }
 
-func (b *Base) List(condition models.Condition) error {
+func (b *Base) List(list interface{}, condition models.Condition) error {
 	if b.Model == nil {
 		return errors.New("db model is must not empty")
 	}
-	return models.List(b.Model, models.DB, b.Models, condition)
+	return models.List(b.Model, models.DB, list, condition)
 }
 
 func (b *Base) Delete(condition map[string][]interface{}, force bool) (err error) {
