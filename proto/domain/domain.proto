@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package go.micro.srv.LPS.Domain;
+package go.micro.srv.LPS.domain;
 
 service Domain {
 	rpc Create(CreateModel) returns (Empty) {}

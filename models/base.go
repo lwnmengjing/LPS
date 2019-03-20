@@ -23,7 +23,6 @@ const (
 func DBInit() {
 	var err error
 	DB, err = gorm.Open("postgres", "postgresql://root@linwenxiangdeMacBook-Air.local:26257/m_sso?sslmode=disable")
-	//DB, err = gorm.Open("mysql", "mysql://test:$j1mepaag^@101.132.122.150:3306/m_lps")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,7 +101,7 @@ func View(base Baser, db *gorm.DB, condition Condition) (Baser, error) {
 
 func List(base Baser, db *gorm.DB, list interface{}, condition Condition) error {
 	base.SetAction(ActionList)
-	query := db.Table(base.TableName())
+	query := db.Model(base)
 	if condition.Limit == 0 {
 		condition.Limit = LimitDefault
 	}
